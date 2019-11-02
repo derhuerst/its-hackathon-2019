@@ -2,6 +2,9 @@
 'use strict'
 
 const groupBy = require('lodash/groupBy')
+const minBy = require('lodash/minBy')
+const maxBy = require('lodash/maxBy')
+const assert = require('assert')
 const positions = require('./reference-positions.json')
 
 const streakBy = (arr, fn) => arr.reduce(({acc, last}, val) => {
@@ -17,6 +20,16 @@ const streakBy = (arr, fn) => arr.reduce(({acc, last}, val) => {
 	}
 }, {acc: [], last: NaN}).acc
 
+const midBy = (arr, fn) => {
+	const min = fn(minBy(arr, fn))
+	const max = fn(maxBy(arr, fn))
+	const mid = min + (max - min) / 2
+	return minBy(arr, val => Math.abs(fn(val) - mid))
+}
+
+const vs = [[1],[1],[1],[1],[4],[7],[8]]
+assert.equal(midBy(vs, val => val[0])[0], 4)
+
 const cleanedPositions = positions
 .filter(pos => !!pos.position)
 .filter(({position}) => position.latitude !== 0 || position.longitude !== 0)
@@ -25,6 +38,15 @@ const cleanedPositions = positions
 	latitude: pos.position.latitude,
 	longitude: pos.position.longitude
 }))
+console.error(cleanedPositions)
 
-console.log(cleanedPositions)
-console.log(streakBy(cleanedPositions, pos => [pos.latitude, pos.longitude].join(':')))
+const positionStreaks = streakBy(cleanedPositions, pos => [pos.latitude, pos.longitude].join(':'))
+console.error(positionStreaks)
+
+const absProfile = positionStreaks.map(streak => midBy(streak, pos => pos.t))
+console.error(absProfile)
+
+const t0 = absProfile[0].t
+const profile = absProfile.map(pos => ({...pos, t: pos.t - t0}))
+
+process.stdout.write(JSON.stringify(profile) + '\n')
