@@ -43,10 +43,7 @@ console.error(cleanedPositions)
 const positionStreaks = streakBy(cleanedPositions, pos => [pos.latitude, pos.longitude].join(':'))
 console.error(positionStreaks)
 
-const absProfile = positionStreaks.map(streak => midBy(streak, pos => pos.t))
-console.error(absProfile)
-
-const t0 = absProfile[0].t
-const profile = absProfile.map(pos => ({...pos, t: pos.t - t0}))
+const profile = positionStreaks.map(streak => midBy(streak, pos => pos.t))
+console.error(profile)
 
 process.stdout.write(JSON.stringify(profile) + '\n')
