@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 'use strict'
 
+const groupBy = require('lodash/groupBy')
+const positions = require('./reference-positions.json')
+
 const streakBy = (arr, fn) => arr.reduce(({acc, last}, val) => {
 	const cmp = fn(val)
 	if (cmp === last) {
@@ -14,5 +17,14 @@ const streakBy = (arr, fn) => arr.reduce(({acc, last}, val) => {
 	}
 }, {acc: [], last: NaN}).acc
 
-const vs = [[1, 'a'], [1, 'b'], [2, 'c'], [3, 'd'], [3, 'e']]
-console.log(streakBy(vs, val => val[0]))
+const cleanedPositions = positions
+.filter(pos => !!pos.position)
+.filter(({position}) => position.latitude !== 0 || position.longitude !== 0)
+.map(pos => ({
+	t: pos.t,
+	latitude: pos.position.latitude,
+	longitude: pos.position.longitude
+}))
+
+console.log(cleanedPositions)
+console.log(streakBy(cleanedPositions, pos => [pos.latitude, pos.longitude].join(':')))
