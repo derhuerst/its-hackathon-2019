@@ -5,10 +5,12 @@
   "description": "",
   "main": "index.js",
   "dependencies": {
+    "color-hash": "^1.0.3",
     "fetch-ponyfill": "^6.1.0",
     "lodash": "^4.17.15",
     "ndjson": "^1.5.0",
     "pinkie-promise": "^2.0.1",
-    "qs": "^6.9.0"
+    "qs": "^6.9.0",
+    "through2": "^3.0.1"
   }
 }
