@@ -1,11 +1,15 @@
 #!/usr/bin/env node
 'use strict'
 
+const {join} = require('path')
 const groupBy = require('lodash/groupBy')
 const minBy = require('lodash/minBy')
 const maxBy = require('lodash/maxBy')
 const assert = require('assert')
-const positions = require('./reference-positions.json')
+
+const [pathToPositions] = process.argv.slice(2)
+if (!pathToPositions) throw new Error('missing path to positions JSON')
+const positions = require(join(process.cwd(), pathToPositions))
 
 const streakBy = (arr, fn) => arr.reduce(({acc, last}, val) => {
 	const cmp = fn(val)
