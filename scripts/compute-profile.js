@@ -1,28 +1,12 @@
 #!/usr/bin/env node
 'use strict'
 
-const {join} = require('path')
-const groupBy = require('lodash/groupBy')
 const minBy = require('lodash/minBy')
 const maxBy = require('lodash/maxBy')
 const assert = require('assert')
-
-const [pathToPositions] = process.argv.slice(2)
-if (!pathToPositions) throw new Error('missing path to positions JSON')
-const positions = require(join(process.cwd(), pathToPositions))
-
-const streakBy = (arr, fn) => arr.reduce(({acc, last}, val) => {
-	const cmp = fn(val)
-	if (cmp === last) {
-		const group = acc[acc.length - 1]
-		group.push(val)
-		return {acc, last: cmp}
-	}
-	return {
-		acc: [...acc, [val]],
-		last: cmp
-	}
-}, {acc: [], last: NaN}).acc
+const pump = require('pump')
+const {parse} = require('ndjson')
+const {reduceStream, streakBy, exitWithError} = require('./lib')
 
 const midBy = (arr, fn) => {
 	const min = fn(minBy(arr, fn))
@@ -34,20 +18,30 @@ const midBy = (arr, fn) => {
 const vs = [[1],[1],[1],[1],[4],[7],[8]]
 assert.equal(midBy(vs, val => val[0])[0], 4)
 
-const cleanedPositions = positions
-.filter(pos => !!pos.position)
-.filter(({position}) => position.latitude !== 0 || position.longitude !== 0)
-.map(pos => ({
-	t: pos.t,
-	latitude: pos.position.latitude,
-	longitude: pos.position.longitude
-}))
-console.error(cleanedPositions)
+const collectCleanedPositions = (acc, {t, position}) => {
+	if (!position) return;
+	if (position.latitude === 0 || position.longitude === 0) return;
+	acc.push({
+		t,
+		latitude: position.latitude,
+		longitude: position.longitude
+	})
+}
 
-const positionStreaks = streakBy(cleanedPositions, pos => [pos.latitude, pos.longitude].join(':'))
-console.error(positionStreaks)
+const computeProfile = (cleanedPositions) => {
+	const positionStreaks = streakBy(cleanedPositions, pos => [pos.latitude, pos.longitude].join(':'))
+	return positionStreaks.map(streak => midBy(streak, pos => pos.t))
+}
 
-const profile = positionStreaks.map(streak => midBy(streak, pos => pos.t))
-console.error(profile)
+pump(
+	process.stdin,
+	parse(),
+	reduceStream([], collectCleanedPositions, (cleanedPositions) => {
+		const profile = computeProfile(cleanedPositions)
 
-process.stdout.write(JSON.stringify(profile) + '\n')
+		process.stdout.write(JSON.stringify(profile) + '\n')
+	}),
+	(err) => {
+		if (err) exitWithError(err)
+	}
+)

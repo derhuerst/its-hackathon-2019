@@ -89,10 +89,24 @@ const exitWithError = (err) => {
 	process.exit(1)
 }
 
+const streakBy = (arr, fn) => arr.reduce(({acc, last}, val) => {
+	const cmp = fn(val)
+	if (cmp === last) {
+		const group = acc[acc.length - 1]
+		group.push(val)
+		return {acc, last: cmp}
+	}
+	return {
+		acc: [...acc, [val]],
+		last: cmp
+	}
+}, {acc: [], last: NaN}).acc
+
 module.exports = {
 	fetchDeps,
 	fetchPosition,
 	fetchTrip,
 	reduceStream,
-	exitWithError
+	exitWithError,
+	streakBy
 }
