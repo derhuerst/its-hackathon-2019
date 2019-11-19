@@ -102,11 +102,16 @@ const streakBy = (arr, fn) => arr.reduce(({acc, last}, val) => {
 	}
 }, {acc: [], last: NaN}).acc
 
+const ColorHash = require('color-hash')
+
+const markerColor = fahrtId => new ColorHash().hex(fahrtId)
+
 module.exports = {
 	fetchDeps,
 	fetchPosition,
 	fetchTrip,
 	reduceStream,
 	exitWithError,
-	streakBy
+	streakBy,
+	markerColor
 }

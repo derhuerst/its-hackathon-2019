@@ -12,6 +12,11 @@ pnpm-debug.log
 /positions.ndjson
 /trips.ndjson
 
-/profile.json
+/reference-profile.json
+/reference-profile.geo.json
+
 /ist-positions.geo.ndjson
 /ist-positions.geo.json
+
+/ist-profile.json
+/ist-profile.geo.json

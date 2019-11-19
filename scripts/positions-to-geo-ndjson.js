@@ -4,10 +4,7 @@
 const pump = require('pump')
 const {parse, stringify} = require('ndjson')
 const through = require('through2')
-const ColorHash = require('color-hash')
-const {exitWithError} = require('./lib')
-
-const colorHash = str => new ColorHash().hex(str)
+const {markerColor, exitWithError} = require('./lib')
 
 pump(
 	process.stdin,
@@ -19,7 +16,7 @@ pump(
 			type: 'Feature',
 			properties: {
 				...res,
-				'marker-color': colorHash(res.journeyId),
+				'marker-color': markerColor(res.journeyId),
 				t: new Date(res.t * 1000).toISOString()
 			},
 			geometry: {

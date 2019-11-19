@@ -10,12 +10,10 @@ set -e
 reference_fahrt_id=$(cat trips.ndjson | ./scripts/find-reference-fahrt.js)
 echo "reference fahrt ID: $reference_fahrt_id"
 
-profile=$(cat positions.ndjson | grep $reference_fahrt_id | ./scripts/compute-profile.js)
-echo "profile:"
-echo $profile | jq
-echo $profile | jq >profile.json
+cat positions.ndjson | grep $reference_fahrt_id | ./scripts/compute-profile.js >reference-profile.json
+./scripts/profile-to-geojson.js reference-profile.json >reference-profile.geo.json
 
-is_fahrt_id=$(
+ist_fahrt_id=$(
 	cat positions.ndjson |
 	grep -v $reference_fahrt_id |
 	ndjson-filter 'd.lineName === "9"' |
@@ -23,13 +21,16 @@ is_fahrt_id=$(
 	head -n 1 |
 	jq -r .journeyId
 )
-echo "ist fahrt ID: $is_fahrt_id"
+echo "ist fahrt ID: $ist_fahrt_id"
 
 cat positions.ndjson | \
-	grep $is_fahrt_id | \
+	grep $ist_fahrt_id | \
 	ndjson-filter 'd.position && d.position.latitude !== 0' | \
 	./scripts/positions-to-geo-ndjson.js \
 	>ist-positions.geo.ndjson
 ./scripts/geo-ndjson-to-geojson.js ist-positions.geo.ndjson >ist-positions.geo.json
+
+cat positions.ndjson | grep $ist_fahrt_id | ./scripts/compute-profile.js >ist-profile.json
+./scripts/profile-to-geojson.js ist-profile.json >ist-profile.geo.json
 
 # todo
