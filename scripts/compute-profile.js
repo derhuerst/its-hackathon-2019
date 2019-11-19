@@ -18,26 +18,35 @@ const midBy = (arr, fn) => {
 const vs = [[1],[1],[1],[1],[4],[7],[8]]
 assert.equal(midBy(vs, val => val[0])[0], 4)
 
-const collectCleanedPositions = (acc, {t, position}) => {
+const collectPositions = (acc, {t, position, journeyId}) => {
 	if (!position) return;
 	if (position.latitude === 0 || position.longitude === 0) return;
-	acc.push({
+	if (!journeyId) return;
+
+	acc.fahrtId = journeyId
+	acc.positions.push({
 		t,
 		latitude: position.latitude,
 		longitude: position.longitude
 	})
 }
 
-const computeProfile = (cleanedPositions) => {
-	const positionStreaks = streakBy(cleanedPositions, pos => [pos.latitude, pos.longitude].join(':'))
-	return positionStreaks.map(streak => midBy(streak, pos => pos.t))
+const computeProfileSamples = (positions) => {
+	const positionStreaks = streakBy(positions, pos => [pos.latitude, pos.longitude].join(':'))
+	const absProfile = positionStreaks.map(streak => midBy(streak, pos => pos.t))
+
+	const t0 = absProfile[0].t
+	return absProfile.map(pos => ({...pos, tAbs: pos.t, t: pos.t - t0}))
 }
 
 pump(
 	process.stdin,
 	parse(),
-	reduceStream([], collectCleanedPositions, (cleanedPositions) => {
-		const profile = computeProfile(cleanedPositions)
+	reduceStream({fahrtId: null, positions: []}, collectPositions, ({fahrtId, positions}) => {
+		const profile = {
+			fahrtId,
+			samples: computeProfileSamples(positions)
+		}
 
 		process.stdout.write(JSON.stringify(profile) + '\n')
 	}),
