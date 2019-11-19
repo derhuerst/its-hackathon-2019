@@ -3,6 +3,7 @@
 const Promise = require('pinkie-promise')
 const {fetch: _fetch} = require('fetch-ponyfill')({Promise})
 const {stringify} = require('qs')
+const {Writable} = require('stream')
 
 const endpoint = 'https://innoapi-k8s01-dev-fcd.reisenden.info/2.7/'
 const token = 'YXBpdXNlcjpnZWhlaW0xMjM0'
@@ -65,8 +66,33 @@ const fetchTrip = async (journeyId) => {
 	return data && data.journey || null
 }
 
+const reduceStream = (acc, reduce, done) => {
+	return new Writable({
+		objectMode: true,
+		write: (val, _, cb) => {
+			reduce(acc, val)
+			cb(null)
+		},
+		writev: (chunks, _, cb) => {
+			for (const {chunk: val} of chunks) reduce(acc, val)
+			cb(null)
+		},
+		final: (cb) => {
+			done(acc)
+			cb()
+		}
+	})
+}
+
+const exitWithError = (err) => {
+	console.error(err)
+	process.exit(1)
+}
+
 module.exports = {
 	fetchDeps,
 	fetchPosition,
-	fetchTrip
+	fetchTrip,
+	reduceStream,
+	exitWithError
 }
