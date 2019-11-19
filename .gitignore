@@ -8,3 +8,10 @@ pnpm-debug.log
 /package-lock.json
 /yarn.lock
 /shrinkwrap.yaml
+
+/positions.ndjson
+/trips.ndjson
+
+/profile.json
+/ist-positions.geo.ndjson
+/ist-positions.geo.json
